@@ -3,6 +3,7 @@
 import requests
 import json
 import unittest
+import csv
 
 ## Instructions for each piece to be completed for this project can be found in the file, below.
 
@@ -69,6 +70,31 @@ def sample_get_cache_itunes_data(search_term,media_term="all"):
 ## [PROBLEM 1] [250 POINTS]
 print("\n***** PROBLEM 1 *****\n")
 
+class Media(object):
+	def __init__(self, media_dict):
+		self.title = media_dict["trackName"]
+		self.author = media_dict["artistName"]
+		self.itunes_URL = media_dict["trackViewUrl"]
+		self.itunes_id = media_dict["trackId"]
+		if "trackTimeMillis" in media_dict.keys():
+			self.track_time = media_dict["trackTimeMillis"]
+		else:
+			self.track_time = None
+
+	def __str__(self):
+		return "{} by {}".format(self.title,self.author)
+
+	def __repr__(self):
+		return "ITUNES MEDIA: {}".format(self.itunes_id)
+
+	def __len__(self):
+		return 0
+
+	def __contains__(self, search_string):
+		if search_string in self.title:
+			return True
+		else:
+			return False
 
 ## For problem 1, you should define a class Media, representing ANY piece of media you can find on iTunes search. 
 
@@ -108,8 +134,16 @@ print("\n***** PROBLEM 2 *****\n")
 ## - genre (the primary genre name from the data iTunes gives you)
 
 ## Should have the len method overridden to return the number of seconds in the song. (HINT: The data supplies number of milliseconds in the song... How can you access that data and convert it to seconds?)
+class Song(Media):
+	def __init__(self, song_dict):
+		Media.__init__(self, song_dict)
+		self.album = song_dict["collectionName"]
+		self.track_number = song_dict["trackNumber"]
+		self.genre = song_dict["primaryGenreName"]
+		self.track_time = song_dict["trackTimeMillis"]
 
-
+	def __len__(self):
+		return int(self.track_time * 0.001)
 
 ### class Movie:
 
@@ -123,7 +157,23 @@ print("\n***** PROBLEM 2 *****\n")
 
 ## Should have an additional method called title_words_num that returns an integer representing the number of words in the movie description. If there is no movie description, this method should return 0.
 
+class Movie(Media):
+	def __init__(self, movie_dict):
+		Media.__init__(self, movie_dict)
+		self.rating = movie_dict["contentAdvisoryRating"]
+		self.genre = movie_dict["primaryGenreName"]
+		self.description = movie_dict["longDescription"].encode("utf-8")
+		if "trackTimeMillis" in movie_dict.keys():
+			self.track_time = movie_dict["trackTimeMillis"]
+		else:
+			self.track_time = None
 
+	def __len__(self):
+		return int((self.track_time/(1000*60)))
+
+	def title_words_num(self):
+		list_of_words = self.description.split()
+		return len(list_of_words)
 
 ## [PROBLEM 3] [150 POINTS]
 print("\n***** PROBLEM 3 *****\n")
@@ -151,7 +201,24 @@ movie_samples = sample_get_cache_itunes_data("love","movie")["results"]
 
 ## You may use any method of accumulation to make that happen.
 
+# media list
+media_list = []
+for media_item in media_samples:
+	media_inst = Media(media_item)
+	media_list.append(media_inst)
+# print(media_list[0])
+# print(type(media_list[0]))
 
+song_list = []
+for song_item in song_samples:
+	song_inst = Song(song_item)
+	song_list.append(song_inst)
+
+
+movie_list = []
+for movie_item in movie_samples:
+	movie_inst = Movie(movie_item)
+	movie_list.append(movie_inst)
 
 
 ## [PROBLEM 4] [200 POINTS]
@@ -162,12 +229,33 @@ print("\n***** PROBLEM 4 *****\n")
 # - songs.csv
 # - media.csv
 
+with open('movies.csv', 'w') as f:
+	fieldnames = ['title', 'artist', 'id', 'url', 'length']
+	w = csv.writer(f, quotechar='"')
+	w.writerow(fieldnames)
+	for movie_rec in movie_list:
+		w.writerow([movie_rec.title, movie_rec.author, movie_rec.itunes_id, movie_rec.itunes_URL, movie_rec.track_time])
+
+with open('songs.csv', 'w') as f2:
+	fieldnames = ['title', 'artist', 'id', 'url', 'length']
+	w = csv.writer(f2, quotechar='"')
+	w.writerow(fieldnames)
+	for song_rec in song_list:
+		w.writerow([song_rec.title, song_rec.author, song_rec.itunes_id, song_rec.itunes_URL, song_rec.track_time])
+
+with open('media.csv', 'w') as f2:
+	fieldnames = ['title', 'artist', 'id', 'url', 'length']
+	w = csv.writer(f2, quotechar='"')
+	w.writerow(fieldnames)
+	for media_rec in media_list:
+		w.writerow([media_rec.title, media_rec.author, media_rec.itunes_id, media_rec.itunes_URL, media_rec.track_time])
+
 ## Each of those CSV files should have 5 columns each:
 # - title
 # - artist
 # - id 
 # - url (for the itunes url of that thing -- the url to view that track of media on iTunes) 
-# - length 
+# - length
 
 ## There are no provided tests for this problem -- you should check your CSV files to see that they fit this description to see if this problem worked correctly for you. IT IS VERY IMPORTANT THAT YOUR CSV FILES HAVE EXACTLY THOSE NAMES!
 
