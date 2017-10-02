@@ -142,6 +142,7 @@ class Song(Media):
 		self.genre = song_dict["primaryGenreName"]
 		self.track_time = song_dict["trackTimeMillis"]
 
+
 	def __len__(self):
 		return int(self.track_time * 0.001)
 
